@@ -1,5 +1,10 @@
 import React from 'react'
 
+import { useForm } from 'react-hook-form'
+
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+
 import { Play } from 'phosphor-react'
 
 import {
@@ -12,10 +17,35 @@ import {
   StartCountdownButton,
 } from './styles'
 
+const createNewCycleSchema = z.object({
+  task: z.string(),
+  minutesAmount: z.number().min(5).max(60),
+})
+
+type CreateNewCycleFormData = z.infer<typeof createNewCycleSchema>
+
 export const Home: React.FC = () => {
+  const { register, handleSubmit, watch, reset } =
+    useForm<CreateNewCycleFormData>({
+      resolver: zodResolver(createNewCycleSchema),
+      defaultValues: {
+        task: '',
+        minutesAmount: 0,
+      },
+    })
+
+  function handleCreateNewCycle(event: CreateNewCycleFormData) {
+    console.log(event)
+
+    reset()
+  }
+
+  const taskField = watch('task')
+  const isSubmitDisabled = !taskField
+
   return (
     <HomeContainer>
-      <form action="">
+      <form onSubmit={handleSubmit(handleCreateNewCycle)}>
         <FormContainer>
           <label htmlFor="task">Vou trabalhar em</label>
 
@@ -24,6 +54,7 @@ export const Home: React.FC = () => {
             id="task"
             list="task-suggestions"
             placeholder="Dê um nome para o seu projeto"
+            {...register('task')}
           />
 
           <datalist id="task-suggestions">
@@ -38,6 +69,9 @@ export const Home: React.FC = () => {
             type="number"
             id="minutesAmount"
             placeholder="00"
+            {...register('minutesAmount', {
+              valueAsNumber: true,
+            })}
           />
 
           <span>minutos.</span>
@@ -51,7 +85,7 @@ export const Home: React.FC = () => {
           <span>0</span>
         </CountdownContainer>
 
-        <StartCountdownButton type="submit">
+        <StartCountdownButton type="submit" disabled={isSubmitDisabled}>
           <Play size={24} />
           Começar
         </StartCountdownButton>
